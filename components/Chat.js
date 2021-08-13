@@ -1,6 +1,8 @@
 import React from 'react';
 import { StyleSheet, View, Text, TextInput, Alert, Button, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
 import { GiftedChat, Bubble } from 'react-native-gifted-chat'
+const firebase = require('firebase').default;
+require('firebase/firestore');
 
 
 export default class Chat extends React.Component {
@@ -8,13 +10,53 @@ export default class Chat extends React.Component {
         super();
         this.state = {
             messages: [],
+            uid: 0,
+            loggedInText: 'Please wait, you are getting logged in',
         };
+
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5Q39DnzOZEPPJImBokSrl7j2Rg2fycUc",
+            authDomain: "chat-app-51f68.firebaseapp.com",
+            projectId: "chat-app-51f68",
+            storageBucket: "chat-app-51f68.appspot.com",
+            messagingSenderId: "1082511549007",
+            appId: "1:1082511549007:web:78823186b370a18200403a",
+            measurementId: "G-WC4VWG2ME7"
+        }
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
     }
 
 
     componentDidMount() {
+
+        // listen to authentication events
+        this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
+            if (!user) {
+                firebase.auth().signInAnonymously();
+            }
+            // Update user state with active user    
+            this.setState({
+                uid: user.uid,
+                messages: [],
+            });
+
+            // Create reference to the active users messages
+            this.referencemessagessUser = firebase.firestore().collection('messages').where('uid', '==', this.state.uid);
+
+            // Listen for collection changes
+            this.unsubscribe = this.referenceChatMessages
+                .orderBy("createdAt", "desc")
+                .onSnapshot(this.onCollectionUpdate);
+        });
+        //Reference the name entered on the start screen
         let name = this.props.route.params.name;
+        //set name to be on top of screen
         this.props.navigation.setOptions({ title: name });
+
         this.setState({
             messages: [
                 {
@@ -37,12 +79,52 @@ export default class Chat extends React.Component {
         })
     }
 
+    componentWillUnmount() {
+        this.unsubscribe();
+    }
+
+    //Send messages
     onSend(messages = []) {
         this.setState(previousState => ({
             messages: GiftedChat.append(previousState.messages, messages),
-        }))
+        }),
+            //call addMessages to save messages to the collection on firebase
+            () => {
+                this.addMessages();
+            })
     }
 
+    // add a new message to the collection
+    addMessages() {
+        const message = this.state.messages[0];
+        this.referencemessages.add({
+            _id: message._id,
+            createdAt: message.createdAt,
+            text: message.text,
+            uid: this.state.uid,
+        });
+    }
+
+    // Retrieve current messages and store them in the state: messages
+    onCollectionUpdate = (querySnapshot) => {
+        const messages = [];
+        // go through each document
+        querySnapshot.forEach((doc) => {
+            // get the QueryDocumentSnapshot's data
+            let data = doc.data();
+            messages.push({
+                _id: data._id,
+                text: data.text,
+                createdAt: data.createdAt.toDate(),
+                user: data.user,
+            });
+        });
+        this.setState({
+            messages,
+        });
+    }
+
+    // Sets message bubble color
     renderBubble(props) {
         return (
             <Bubble
@@ -65,9 +147,7 @@ export default class Chat extends React.Component {
                     renderBubble={this.renderBubble.bind(this)}
                     messages={this.state.messages}
                     onSend={messages => this.onSend(messages)}
-                    user={{
-                        _id: 1,
-                    }}
+                    user={this.state.user}
                 />
                 {Platform.OS === 'android' ? <KeyboardAvoidingView behavior="height" /> : null}
             </View>

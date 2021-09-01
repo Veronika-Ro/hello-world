@@ -12,6 +12,11 @@ export default class Chat extends React.Component {
             messages: [],
             uid: 0,
             loggedInText: 'Please wait, you are getting logged in',
+            user: {
+                _id: '',
+                name: '',
+                avatar: null,
+            }
         };
 
 
@@ -28,6 +33,10 @@ export default class Chat extends React.Component {
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
+
+        this.referenceChatMessages = firebase.firestore().collection("messages");
+        this.referenceMessageUser = null;
+
     }
 
 
@@ -42,10 +51,15 @@ export default class Chat extends React.Component {
             this.setState({
                 uid: user.uid,
                 messages: [],
+                user: {
+                    _id: user.uid,
+                    name: name,
+                    avatar: 'https://placeimg.com/140/140/any',
+                }
             });
 
             // Create reference to the active users messages
-            this.referencemessagessUser = firebase.firestore().collection('messages').where('uid', '==', this.state.uid);
+            this.referenceMessagesUser = firebase.firestore().collection('messages').where('uid', '==', this.state.uid);
 
             // Listen for collection changes
             this.unsubscribe = this.referenceChatMessages
@@ -56,31 +70,10 @@ export default class Chat extends React.Component {
         let name = this.props.route.params.name;
         //set name to be on top of screen
         this.props.navigation.setOptions({ title: name });
-
-        this.setState({
-            messages: [
-                {
-                    _id: 1,
-                    text: 'Hello developer',
-                    createdAt: new Date(),
-                    user: {
-                        _id: 2,
-                        name: 'React Native',
-                        avatar: 'https://placeimg.com/140/140/any',
-                    },
-                },
-                {
-                    _id: 2,
-                    text: `${name} entered the chat`,
-                    createdAt: new Date(),
-                    system: true,
-                },
-            ]
-        })
     }
 
     componentWillUnmount() {
-        this.unsubscribe();
+        this.authUnsubscribe();
     }
 
     //Send messages
@@ -97,11 +90,12 @@ export default class Chat extends React.Component {
     // add a new message to the collection
     addMessages() {
         const message = this.state.messages[0];
-        this.referencemessages.add({
+        this.referenceChatMessages.add({
             _id: message._id,
             createdAt: message.createdAt,
             text: message.text,
             uid: this.state.uid,
+            user: message.user,
         });
     }
 
@@ -116,7 +110,11 @@ export default class Chat extends React.Component {
                 _id: data._id,
                 text: data.text,
                 createdAt: data.createdAt.toDate(),
-                user: data.user,
+                user: {
+                    _id: data.user._id,
+                    name: data.user.name,
+                    avatar: data.user.avatar,
+                },
             });
         });
         this.setState({

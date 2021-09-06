@@ -12,6 +12,30 @@ For this Achievement’s project, I’ll use React Native, Expo, and Google Fire
 chat app that I can add to my portfolio and demonstrate my knowledge of JavaScript mobile
 development.
 
+## Setup
+
+Install expo globally
+
+https://docs.expo.dev/get-started/installation/
+
+```
+npm install --global-cli
+```
+
+Clone this repository and install dependencies
+
+```
+npm install
+```
+
+To start the project
+
+```
+expo start or npm run start
+```
+
+Scan the QR code with Expo Go (Android) or the Camera app (iOS)
+
 ## The 5 Ws
 1. Who—The users of the mobile chat app. These could be friends, family or other
 students on this course. Your codebase will be used by other developers working on

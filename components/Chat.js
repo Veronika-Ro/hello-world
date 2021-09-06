@@ -1,8 +1,8 @@
 import React from 'react';
-import { StyleSheet, View, Text, TextInput, Alert, Button, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
-import { AsyncStorage } from 'react-native';
+import { StyleSheet, View, Text, TextInput, Alert, Button, ScrollView, Platform, KeyboardAvoidingView, AsyncStorage } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
-import { GiftedChat, Bubble } from 'react-native-gifted-chat'
+import { GiftedChat, Bubble, InputToolbar } from 'react-native-gifted-chat'
+import CustomActions from './CustomActions';
 const firebase = require('firebase').default;
 require('firebase/firestore');
 
@@ -20,6 +20,8 @@ export default class Chat extends React.Component {
                 avatar: null,
             },
             isConnected: false,
+            image: null,
+            location: null,
         };
 
 
@@ -41,6 +43,8 @@ export default class Chat extends React.Component {
         this.referenceMessageUser = null;
 
     }
+
+
 
     async getMessages() {
         let messages = '';
@@ -64,9 +68,9 @@ export default class Chat extends React.Component {
                 console.log('online');
 
                 // listen to authentication events
-                this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
+                this.authUnsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
                     if (!user) {
-                        firebase.auth().signInAnonymously();
+                        await firebase.auth().signInAnonymously();
                     }
                     // Update user state with active user    
                     this.setState({
@@ -135,9 +139,11 @@ export default class Chat extends React.Component {
         this.referenceChatMessages.add({
             _id: message._id,
             createdAt: message.createdAt,
-            text: message.text,
+            text: message.text || null,
             uid: this.state.uid,
             user: message.user,
+            image: message.image || null,
+            location: message.location || null,
         });
     }
 
@@ -169,6 +175,8 @@ export default class Chat extends React.Component {
                     name: data.user.name,
                     avatar: data.user.avatar,
                 },
+                image: data.image || null,
+                location: data.location || null,
             });
         });
         this.setState({
@@ -191,15 +199,32 @@ export default class Chat extends React.Component {
     }
 
     //only render input tool bar hen the user is online
-    renderInputToolbar(props) {
-        if (this.state.isConnected == false) {
+    renderInputToolbar = (props) => {
+        if (this.state.isConnected === false) {
         } else {
+            return <InputToolbar {...props} />;
+        }
+    };
+
+    renderCustomActions = (props) => <CustomActions {...props} />;
+
+    //custom map view
+    renderCustomView(props) {
+        const { currentMessage } = props;
+        if (currentMessage.location) {
             return (
-                <InputToolbar
-                    {...props}
+                <MapView
+                    style={{ width: 150, height: 100, borderRadius: 13, margin: 3 }}
+                    region={{
+                        latitude: currentMessage.location.latitude,
+                        longitude: currentMessage.location.longitude,
+                        latitudeDelta: 0.0922,
+                        longitudeDelta: 0.0421,
+                    }}
                 />
             );
         }
+        return null;
     }
 
     render() {
@@ -209,9 +234,12 @@ export default class Chat extends React.Component {
             <View style={{ flex: 1, backgroundColor }}>
                 <GiftedChat
                     renderBubble={this.renderBubble.bind(this)}
+                    renderInputToolbar={this.renderInputToolbar}
                     messages={this.state.messages}
                     onSend={messages => this.onSend(messages)}
                     user={this.state.user}
+                    renderActions={this.renderCustomActions}
+                    renderCustomView={this.renderCustomView}
                 />
                 {Platform.OS === 'android' ? <KeyboardAvoidingView behavior="height" /> : null}
             </View>

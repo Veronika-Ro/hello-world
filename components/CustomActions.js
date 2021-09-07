@@ -1,13 +1,10 @@
-
-//  import PropTypes
 import PropTypes from "prop-types";
-//import react
 import React from "react";
 //import necessary components from react-native
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 //import permissions and imagepicker
-import * as Permissions from "expo-permissions";
 import * as ImagePicker from "expo-image-picker";
+import { Camera } from 'expo-camera';
 import * as Location from "expo-location";
 import firebase from 'firebase';
 import firestore from 'firebase';
@@ -23,7 +20,7 @@ export default class CustomActions extends React.Component {
      */
     imagePicker = async () => {
         // expo permission
-        const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+        const { status } = await Camera.requestPermissionsAsync();
         try {
             if (status === "granted") {
                 // pick image
@@ -47,10 +44,7 @@ export default class CustomActions extends React.Component {
      * @async
      */
     takePhoto = async () => {
-        const { status } = await Permissions.askAsync(
-            Permissions.CAMERA,
-            Permissions.CAMERA_ROLL
-        );
+        const { status } = await Camera.requestPermissionsAsync();
         try {
             if (status === "granted") {
                 const result = await ImagePicker.launchCameraAsync({
@@ -74,10 +68,10 @@ export default class CustomActions extends React.Component {
      */
     getLocation = async () => {
         try {
-            const { status } = await Permissions.askAsync(Permissions.LOCATION);
+            const { status } = await Location.requestForegroundPermissionsAsync();
             if (status === "granted") {
                 const result = await Location.getCurrentPositionAsync(
-                    {}
+                    { accuracy: Location.Accuracy.Highest }
                 ).catch((error) => console.log(error));
                 const longitude = JSON.stringify(result.coords.longitude);
                 const altitude = JSON.stringify(result.coords.latitude);

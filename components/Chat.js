@@ -1,5 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, Text, TextInput, Alert, Button, ScrollView, Platform, KeyboardAvoidingView, AsyncStorage } from 'react-native';
+import { StyleSheet, View, Text, TextInput, Alert, Button, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import MapView from 'react-native-maps';
 import NetInfo from '@react-native-community/netinfo';
 import { GiftedChat, Bubble, InputToolbar } from 'react-native-gifted-chat'
 import CustomActions from './CustomActions';
@@ -214,7 +216,7 @@ export default class Chat extends React.Component {
         if (currentMessage.location) {
             return (
                 <MapView
-                    style={{ width: 150, height: 100, borderRadius: 13, margin: 3 }}
+                    style={{ width: 150, height: 100, borderRadius: 13, margin: 8 }}
                     region={{
                         latitude: currentMessage.location.latitude,
                         longitude: currentMessage.location.longitude,
@@ -234,7 +236,7 @@ export default class Chat extends React.Component {
             <View style={{ flex: 1, backgroundColor }}>
                 <GiftedChat
                     renderBubble={this.renderBubble.bind(this)}
-                    renderInputToolbar={this.renderInputToolbar}
+                    renderInputToolbar={this.renderInputToolbar.bind(this)}
                     messages={this.state.messages}
                     onSend={messages => this.onSend(messages)}
                     user={this.state.user}

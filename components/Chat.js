@@ -108,10 +108,6 @@ export default class Chat extends React.Component {
         this.props.navigation.setOptions({ title: name });
     }
 
-    componentWillUnmount() {
-        this.authUnsubscribe();
-    }
-
     //Send messages
     onSend(messages = []) {
         this.setState(previousState => ({
@@ -227,6 +223,10 @@ export default class Chat extends React.Component {
             );
         }
         return null;
+    }
+
+    componentWillUnmount() {
+        this.authUnsubscribe();
     }
 
     render() {

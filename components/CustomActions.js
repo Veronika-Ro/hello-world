@@ -71,7 +71,7 @@ export default class CustomActions extends React.Component {
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status === "granted") {
                 const result = await Location.getCurrentPositionAsync(
-                    { accuracy: Location.Accuracy.Highest }
+                    {}
                 ).catch((error) => console.log(error));
                 const longitude = JSON.stringify(result.coords.longitude);
                 const altitude = JSON.stringify(result.coords.latitude);

@@ -6,6 +6,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from 'expo-camera';
 import * as Location from "expo-location";
+import * as Permissions from 'expo-permissions';
 import firebase from 'firebase';
 import firestore from 'firebase';
 //import firebase
@@ -67,27 +68,17 @@ export default class CustomActions extends React.Component {
      * @async
      */
     getLocation = async () => {
-        try {
-            const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status === "granted") {
-                const result = await Location.getCurrentPositionAsync(
-                    {}
-                ).catch((error) => console.log(error));
-                const longitude = JSON.stringify(result.coords.longitude);
-                const altitude = JSON.stringify(result.coords.latitude);
-                if (result) {
-                    this.props.onSend({
-                        location: {
-                            longitude: result.coords.longitude,
-                            latitude: result.coords.latitude,
-                        },
-                    });
-                }
+        const { status } = await Permissions.askAsync(Permissions.LOCATION);
+        if (status === 'granted') {
+            let result = await Location.getCurrentPositionAsync({});
+
+            if (result) {
+                this.setState({
+                    location: result
+                });
             }
-        } catch (error) {
-            console.log(error.message);
         }
-    };
+    }
 
     /**
      * Upload images to firebase

@@ -68,15 +68,25 @@ export default class CustomActions extends React.Component {
      * @async
      */
     getLocation = async () => {
-        const { status } = await Permissions.askAsync(Permissions.LOCATION);
-        if (status === 'granted') {
-            let result = await Location.getCurrentPositionAsync({});
+        try {
+            const { status } = await Permissions.askAsync(Permissions.LOCATION_BACKGROUND);
+            if (status === "granted") {
+                let result = await Location.getCurrentPositionAsync(
+                    {}
+                ).catch((error) => console.log(error));
 
-            if (result) {
-                this.setState({
-                    location: result
-                });
+
+                if (result) {
+                    this.props.onSend({
+                        location: {
+                            longitude: result.coords.longitude,
+                            latitude: result.coords.latitude,
+                        },
+                    });
+                }
             }
+        } catch (error) {
+            console.log(error.message);
         }
     }
 
